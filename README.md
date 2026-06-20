@@ -35,5 +35,5 @@ HellsHall6(nr, a1, a2, a3, a4, a5, a6 uintptr) (uintptr, uintptr, syscall.Errno)
 ## References
 
 - Inspired by [Hell's Gate](https://github.com/am0nsec/HellsGate)
-- Inspired by [Halo's Gate](https://blog.sektor7.net/#!res/2021/halos-gate.md)
+- Inspired by [Halo's Gate](https://github.com/boku7/AsmHalosGate)
 - Inspired by [HellsHall](https://github.com/Maldev-Academy/HellHall)
