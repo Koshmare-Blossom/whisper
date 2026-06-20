@@ -87,4 +87,34 @@ func main() {
 	Syscall3(syscall.SYS_MUNMAP, addr, 4096, 0)
 
 	okf("whisper demo OK")
+
+	// ── HellsHall mode (JMP-based) ─────────────────────────────────────────
+	logf("--- HellsHall (JMP) ---")
+
+	pid2, _, errno := HellsHall3(syscall.SYS_GETPID, 0, 0, 0)
+	if errno != 0 {
+		errf("HellsHall getpid: %v", errno)
+		os.Exit(1)
+	}
+	okf("SYS_GETPID  -> %d", pid2)
+
+	uid2, _, errno := HellsHall3(syscall.SYS_GETUID, 0, 0, 0)
+	if errno != 0 {
+		errf("HellsHall getuid: %v", errno)
+		os.Exit(1)
+	}
+	okf("SYS_GETUID  -> %d", uid2)
+
+	addr2, _, errno := HellsHall6(syscall.SYS_MMAP, 0, 4096,
+		syscall.PROT_READ|syscall.PROT_WRITE,
+		syscall.MAP_PRIVATE|syscall.MAP_ANONYMOUS,
+		^uintptr(0), 0)
+	if errno != 0 {
+		errf("HellsHall mmap: %v", errno)
+		os.Exit(1)
+	}
+	okf("SYS_MMAP    -> %#x", addr2)
+	HellsHall3(syscall.SYS_MUNMAP, addr2, 4096, 0)
+
+	okf("hellshall demo OK")
 }
