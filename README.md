@@ -1,26 +1,33 @@
 # whisper
 
-Indirect syscalls for Linux using `syscall; ret` gadgets discovered at runtime, written in Go and Plan9 assembly.
+Indirect syscalls for Linux. Locates `syscall; ret` gadgets in `[vdso]` or `libc` at runtime and dispatches syscalls through them - the `syscall` instruction always executes from a legitimate mapped region, never from the Go binary's `.text`.
 
-## Methods
+Written in Go and Plan9 assembly, zero CGO.
 
-### Hell's Gate
-Parses the system `libc` ELF on disk (via `debug/elf`) and scans known syscall wrapper symbols (`getpid`, `read`, `write`, ...) to locate a `syscall; ret` or `syscall; pop rbp; ret` gadget. Preferred strategy.
+## Gadget discovery
 
-### Halo's Gate
-Fallback when ELF parsing fails. Blind-scans the `[vdso]` and all other `r-xp` mapped regions from `/proc/self/maps` for the same gadget patterns.
+### Hell's Gate strategy
+Parses the system `libc` ELF on disk (via `debug/elf`) and scans known syscall wrapper symbols (`getpid`, `read`, `write`, ...) for a `syscall; ret` or `syscall; pop rbp; ret` gadget. Preferred.
 
-### HellsHall
-JMP-based variant. Instead of `CALL gadget` (which leaves whisper on the call stack), the trampoline patches `[rsp]` with a result handler then `JMP`s to the gadget. The gadget's `ret` lands directly in the caller - whisper is invisible in the call stack during the syscall.
+### Halo's Gate strategy
+Fallback when ELF parsing fails. Blind-scans `[vdso]` then all `r-xp` regions from `/proc/self/maps` for the same patterns.
+
+## Invocation methods
+
+### Whisper (CALL-based)
+Standard indirect syscall. `CALL gadget` - whisper's trampoline appears in the call stack during the syscall.
+
+### HellsHall (JMP-based)
+Patches `[rsp]` with a result handler then `JMP`s to the gadget. The gadget's `ret` returns directly to the Go caller - whisper is invisible in the call stack during the syscall.
 
 ## API
 
 ```go
-// Hell's Gate / Halo's Gate - CALL-based
+// Whisper - CALL-based indirect syscall
 Syscall3(nr, a1, a2, a3 uintptr) (uintptr, uintptr, syscall.Errno)
 Syscall6(nr, a1, a2, a3, a4, a5, a6 uintptr) (uintptr, uintptr, syscall.Errno)
 
-// HellsHall - JMP-based, whisper absent from call stack
+// HellsHall - JMP-based, trampoline absent from call stack
 HellsHall3(nr, a1, a2, a3 uintptr) (uintptr, uintptr, syscall.Errno)
 HellsHall6(nr, a1, a2, a3, a4, a5, a6 uintptr) (uintptr, uintptr, syscall.Errno)
 ```
@@ -28,5 +35,5 @@ HellsHall6(nr, a1, a2, a3, a4, a5, a6 uintptr) (uintptr, uintptr, syscall.Errno)
 ## References
 
 - Inspired by [Hell's Gate](https://github.com/am0nsec/HellsGate)
-- Inspired by [Halo's Gate](https://blog.rebelit.net/?p=163)
+- Inspired by [Halo's Gate](https://blog.sektor7.net/#!res/2021/halos-gate.md)
 - Inspired by [HellsHall](https://github.com/Maldev-Academy/HellHall)
